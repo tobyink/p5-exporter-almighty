@@ -1,0 +1,19 @@
+# This file contains general metadata about the project.
+
+@prefix : <http://usefulinc.com/ns/doap#>.
+
+`Exporter-Almighty`
+	:programming-language "Perl" ;
+	:shortdesc            "combining Exporter::Tiny with some other stuff for added power";
+	:homepage             <https://metacpan.org/release/Exporter-Almighty>;
+	:download-page        <https://metacpan.org/release/Exporter-Almighty>;
+	:bug-database         <https://github.com/tobyink/p5-exporter-almighty/issues>;
+	:repository           [ a :GitRepository; :browse <https://github.com/tobyink/p5-exporter-almighty> ];
+	:created              2023-01-26;
+	:license              <http://dev.perl.org/licenses/>;
+	:maintainer           cpan:TOBYINK;
+	:developer            cpan:TOBYINK.
+
+<http://dev.perl.org/licenses/>
+	dc:title  "the same terms as the perl 5 programming language system itself".
+
