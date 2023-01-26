@@ -3,7 +3,15 @@
 @prefix : <http://ontologi.es/doap-deps#>.
 
 `Exporter-Almighty`
-	:runtime-requirement    [ :on "perl 5.010001"^^:CpanId ];
+	:runtime-requirement    [ :on "perl 5.012"^^:CpanId ];
+	:runtime-requirement    [ :on "builtins::compat"^^:CpanId ];
+	:runtime-requirement    [ :on "Eval::TypeTiny"^^:CpanId ];
+	:runtime-requirement    [ :on "Exporter::Shiny 1.006000"^^:CpanId ];
+	:runtime-requirement    [ :on "Import::Into"^^:CpanId ];
+	:runtime-requirement    [ :on "Module::Runtime"^^:CpanId ];
+	:runtime-requirement    [ :on "Type::Registry"^^:CpanId ];
+	:runtime-requirement    [ :on "Type::Tiny::Enum 2.002001"^^:CpanId ];
+	:runtime-requirement    [ :on "Types::Common 2.002001"^^:CpanId ];
 	:test-requirement       [ :on "Test2::V0"^^:CpanId ];
 	:test-requirement       [ :on "Test2::Tools::Spec"^^:CpanId ];
 	:test-requirement       [ :on "Test2::Require::AuthorTesting"^^:CpanId ];
