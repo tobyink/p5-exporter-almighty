@@ -5,7 +5,7 @@ use warnings;
 package Exporter::Almighty;
 
 our $AUTHORITY = 'cpan:TOBYINK';
-our $VERSION   = '0.001000';
+our $VERSION   = '0.001001';
 
 use parent           qw( Exporter::Tiny );
 

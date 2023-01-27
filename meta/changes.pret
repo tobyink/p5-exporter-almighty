@@ -1,5 +1,13 @@
 # This file acts as the project's changelog.
 
+`Exporter-Almighty 0.001001 cpan:TOBYINK`
+	issued  2023-01-27;
+	changeset [
+		item "Adding any enums to an exporter now makes your package a subclass of Type::Library instead of Exporter::Tiny."^^Change;
+		item "Rely on Type::Library's grouping/tagging for any type constraints in the exporter."^^Change;
+		item "Avoid experimental::builtin warnings on Perl 5.36+."^^Bugfix;
+	].
+
 `Exporter-Almighty 0.001000 cpan:TOBYINK`
 	issued  2023-01-27;
 	label   "Initial release".
