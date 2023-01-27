@@ -47,7 +47,8 @@ describe "method `base_exporter`" => sub {
 
 describe "method `standard_package_variables`" => sub {
 
-	package Local::TestPkg1 {
+	{
+		package Local::TestPkg1;
 		our @ISA          = qw( strict );
 		our @EXPORT       = qw( a b c );
 		our @EXPORT_OK    = qw( d e f );
