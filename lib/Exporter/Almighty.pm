@@ -9,12 +9,11 @@ our $VERSION   = '0.001000';
 
 use parent           qw( Exporter::Tiny );
 
-use if $] lt '5.036000',
-	'builtins::compat' => qw( is_bool created_as_string created_as_number );
-use if $] ge '5.036000',
-	'builtin'          => qw( is_bool created_as_string created_as_number );
-no if $] ge '5.036000',
-	'warnings'         => qw( experimental::builtin );
+my @builtins;
+BEGIN { @builtins = qw( is_bool created_as_string created_as_number ) };
+use if $] lt '5.036000', 'builtins::compat' => @builtins;
+use if $] ge '5.036000', 'builtin' => @builtins;
+no if $] ge '5.036000', 'warnings' => qw( experimental::builtin );
 
 use B                qw( perlstring );
 use Carp             qw( croak );
