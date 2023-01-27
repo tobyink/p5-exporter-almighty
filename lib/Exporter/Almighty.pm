@@ -9,7 +9,11 @@ our $VERSION   = '0.001000';
 
 use parent           qw( Exporter::Tiny );
 
-use builtins::compat qw( is_bool created_as_string created_as_number );
+use if $] lt '5.036000',
+	'builtins::compat' => qw( is_bool created_as_string created_as_number );
+use if $] ge '5.036000',
+	'builtin'          => qw( is_bool created_as_string created_as_number );
+
 use B                qw( perlstring );
 use Carp             qw( croak );
 use Eval::TypeTiny   qw( eval_closure set_subname );
@@ -202,7 +206,7 @@ sub finalize_export_variables_for {
 	my %default_exports;
 	for my $list ( $into_EXPORT, $into_EXPORT_TAGS->{default} ) {
 		is_ArrayRef $list or next;
-		$all_exports{$_}++ for @$list;
+		$default_exports{$_}++ for @$list;
 	}
 	@{ $into_EXPORT } = sort keys %default_exports;
 	
@@ -282,6 +286,8 @@ list of things they want to import.
 The following other tags also have special meanings: C<constants>,
 C<types>, C<assert>, C<is>, C<to>, and C<all>.
 
+By convention, tags names should be snake_case.
+
 =head3 C<< const >>
 
 Similar to C<< tag >> this is a hashref where keys are tag names, but instead
@@ -293,6 +299,9 @@ A user of the package defined in the L</SYNOPSIS> could import:
   use Your::Package qw( RED GREEN BLUE );   # import constants by name
   use Your::Package qw( :colours );         # import 'colours' constants
   use Your::Package qw( :constants );       # import ALL constants
+
+By convention, the tag names should be snake_case, but constant names
+should be SHOUTING_SNAKE_CASE.
 
 =head3 C<< enum >>
 
@@ -313,6 +322,8 @@ A user of the package defined in the L</SYNOPSIS> could import:
 
 The C<< :type >>, C<< :is >>, C<< :assert >>, C<< :to >>, and C<< :constants >>
 tags will also automatically include the relevent exports.
+
+By convention, enum types should be UpperCamelCase.
 
 =head3 C<< also >>
 
