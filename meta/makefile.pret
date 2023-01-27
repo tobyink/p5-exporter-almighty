@@ -8,6 +8,7 @@
 	:runtime-requirement    [ :on "Exporter::Shiny 1.006000"^^:CpanId ];
 	:runtime-requirement    [ :on "Import::Into"^^:CpanId ];
 	:runtime-requirement    [ :on "Module::Runtime"^^:CpanId ];
+	:runtime-requirement    [ :on "Type::Library"^^:CpanId ];
 	:runtime-requirement    [ :on "Type::Registry"^^:CpanId ];
 	:runtime-requirement    [ :on "Type::Tiny::Enum 2.002001"^^:CpanId ];
 	:runtime-requirement    [ :on "Types::Common 2.002001"^^:CpanId ];

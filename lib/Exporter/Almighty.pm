@@ -98,8 +98,8 @@ sub setup_exporter_for {
 		$me->standard_package_variables( $into );
 	
 	# Set up @ISA in caller package.
-	push @$into_ISA, $me->base_exporter
-		unless $into->isa( 'Exporter::Tiny' );
+	my $base = $me->base_exporter( $into, $setup );
+	push @$into_ISA, $base unless $into->isa( $base );
 	
 	# Set up %EXPORT_TAGS in caller package.
 	my %tags = %{ $setup->{tag} // {} };
@@ -115,6 +115,8 @@ sub setup_exporter_for {
 sub setup_reexports_for {
 	my ( $me, $into, $setup ) = @_;
 	
+	my $next = $into->can( '_exporter_validate_opts' );
+	
 	my $optlist = mkopt( $setup->{also} );
 	require_module( $_->[0] ) for @$optlist;
 	
@@ -126,6 +128,7 @@ sub setup_reexports_for {
 			my ( $module, $args ) = @$also;
 			$module->import::into( $caller, @{ $args // [] } );
 		}
+		goto $next if $next;
 	};
 	no strict 'refs';
 	*$method_name = set_subname $method_name => $method_code;
@@ -138,6 +141,8 @@ sub setup_enums_for {
 		$me->standard_package_variables( $into );
 	my $reg = Type::Registry->for_class( $into );
 	
+	$me->_ensure_isa_type_library( $into );
+	
 	my %tags = %{ assert_HashRef $setup->{enum} // {} };
 	for my $tag_name ( keys %tags ) {
 		my $values = $tags{$tag_name};
@@ -146,16 +151,29 @@ sub setup_enums_for {
 		$tag_name = lc $tag_name;
 		
 		Type::Tiny::Enum->import( { into => $into }, $type_name, $values );
-		my @exportables = @{ $reg->lookup( $type_name )->exportables };
-		for my $e ( @exportables ) {
-			for my $t ( @{ $e->{tags} } ) {
-				push @{ $into_EXPORT_TAGS->{$t} //= [] }, $e->{name};
-			}
-		}
-		push @{ $into_EXPORT_TAGS->{$tag_name} //= [] }, map $_->{name}, @exportables;
+		$into->add_type( $reg->lookup( $type_name ) );
 	}
 	
 	return;
+}
+
+sub _ensure_isa_type_library {
+	my ( $me, $into ) = @_;
+	return if $into->isa( 'Type::Library' );
+	my ( $old_isa ) = $me->standard_package_variables( $into );
+	my $new_isa = [];
+	my $saw_exporter_tiny = 0;
+	for my $pkg ( @$old_isa ) {
+		if ( $pkg eq 'Exporter::Tiny' ) {
+			push @$new_isa, 'Type::Library';
+			$saw_exporter_tiny++;
+		}
+		else {
+			push @$new_isa, $pkg;
+		}
+	}
+	push @$new_isa, 'Type::Library' unless $saw_exporter_tiny;
+	@$old_isa = @$new_isa;
 }
 
 sub setup_constants_for {
@@ -350,10 +368,14 @@ A user of the package defined in the L</SYNOPSIS> could import:
     STATUS_ALIVE
     STATUS_DEAD
   );
-  use Your::Package qw( :status );          # shortcut for the above
+  use Your::Package qw( +Status );  # shortcut for the above
 
 The C<< :type >>, C<< :is >>, C<< :assert >>, C<< :to >>, and C<< :constants >>
 tags will also automatically include the relevent exports.
+
+If you export any enums then your module will be "promoted" from being an
+L<Exporter::Tiny> to being a L<Type::Library> (which is itself a subclass
+of L<Exporter::Tiny>.
 
 By convention, enum types should be UpperCamelCase.
 

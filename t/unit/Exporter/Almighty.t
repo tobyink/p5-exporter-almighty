@@ -261,7 +261,7 @@ describe "method `setup_exporter_for`" => sub {
 	};
 };
 
-describe "method `setup_exporter_for`" => sub {
+describe "method `setup_reexports_for`" => sub {
 	
 	tests 'it works' => sub {
 		
@@ -326,16 +326,6 @@ describe "method `setup_enums_for`" => sub {
 		is(
 			\%Local::TestPkg14::EXPORT_TAGS,
 			hash {
-				field colour => bag {
-					item string 'Colour';
-					item string 'assert_Colour';
-					item string 'is_Colour';
-					item string 'to_Colour';
-					item string 'COLOUR_RED';
-					item string 'COLOUR_GREEN';
-					item string 'COLOUR_BLUE';
-					end;
-				};
 				field types => bag {
 					item string 'Colour';
 					end;
