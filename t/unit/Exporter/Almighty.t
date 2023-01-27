@@ -158,6 +158,62 @@ describe "method `setup_for`" => sub {
 	};
 };
 
+describe "method `steps`" => sub {
+	
+	my ( $setup, $expected );
+	
+	case 'when no optional calls are needed' => sub {
+		$setup     = {};
+		$expected  = [
+			'setup_exporter_for',
+			'finalize_export_variables_for',
+		];
+	};
+	
+	case 'when setup_reexports_for needs to be called' => sub {
+		$setup     = { also => [] };
+		$expected  = [
+			'setup_exporter_for',
+			'setup_reexports_for',
+			'finalize_export_variables_for',
+		];
+	};
+	
+	case 'when setup_enums_for needs to be called' => sub {
+		$setup     = { enum => {} };
+		$expected  = [
+			'setup_exporter_for',
+			'setup_enums_for',
+			'finalize_export_variables_for',
+		];
+	};
+	
+	case 'when setup_constants_for needs to be called' => sub {
+		$setup     = { const => {} };
+		$expected  = [
+			'setup_exporter_for',
+			'setup_constants_for',
+			'finalize_export_variables_for',
+		];
+	};
+	
+	case 'when all optional calls are needed' => sub {
+		$setup     = { also => [], const => {}, enum => {} };
+		$expected  = [
+			'setup_exporter_for',
+			'setup_reexports_for',
+			'setup_enums_for',
+			'setup_constants_for',
+			'finalize_export_variables_for',
+		];
+	};
+	
+	tests 'it works' => sub {
+		my @steps = $CLASS->steps( 'Local::TestPkg18', $setup );
+		is( \@steps, $expected, 'expected steps' )
+	};
+};
+
 describe "method `setup_exporter_for`" => sub {
 
 	my ( $into, $setup, $tags_var, $expected_tags );

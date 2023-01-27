@@ -40,6 +40,7 @@ sub _exporter_validate_opts {
 	$me->setup_for( $into, $setup );
 }
 
+# Subclasses may wish to provide a subclass of Exporter::Tiny here.
 sub base_exporter {
 	return 'Exporter::Tiny';
 }
@@ -71,12 +72,23 @@ signature_for setup_for => (
 sub setup_for {
 	my ( $me, $into, $setup ) = @_;
 	$INC{ module_notional_filename($into) } //= __FILE__;
-	$me->setup_exporter_for( $into, $setup );
-	$me->setup_reexports_for( $into, $setup )  if $setup->{also};
-	$me->setup_enums_for( $into, $setup )      if $setup->{enum};
-	$me->setup_constants_for( $into, $setup )  if $setup->{const};
-	$me->finalize_export_variables_for( $into, $setup );
+	my @steps = $me->steps( $into, $setup );
+	for my $step ( @steps ) {
+		$me->$step( $into, $setup );
+	}
 	return;
+}
+
+# Subclasses can wrap this to easily add and remove steps.
+sub steps {
+	my ( $me, $into, $setup ) = @_;
+	my @steps;
+	push @steps, 'setup_exporter_for';
+	push @steps, 'setup_reexports_for'            if $setup->{also};
+	push @steps, 'setup_enums_for'                if $setup->{enum};
+	push @steps, 'setup_constants_for'            if $setup->{const};
+	push @steps, 'finalize_export_variables_for';
+	return @steps;
 }
 
 sub setup_exporter_for {
@@ -86,7 +98,8 @@ sub setup_exporter_for {
 		$me->standard_package_variables( $into );
 	
 	# Set up @ISA in caller package.
-	push @$into_ISA, $me->base_exporter;
+	push @$into_ISA, $me->base_exporter
+		unless $into->isa( 'Exporter::Tiny' );
 	
 	# Set up %EXPORT_TAGS in caller package.
 	my %tags = %{ $setup->{tag} // {} };
@@ -256,7 +269,7 @@ Exporter::Almighty - combining Exporter::Tiny with some other stuff for added po
 =head1 DESCRIPTION
 
 This module aims to make building exporters easier. It is based on
-L<Exporter::Shiny>, but helps you avoid manually setting C<< @EXPORT_OK >>,
+L<Exporter::Tiny>, but helps you avoid manually setting C<< @EXPORT_OK >>,
 C<< %EXPORT_TAGS >>, etc.
 
 =head2 Setup Options
@@ -272,6 +285,13 @@ C<tag> or C<tags>!
 
 This is a hashref where the keys are tag names and the values are arrayrefs
 of function names.
+
+  use Exporter::Almighty -setup => {
+    tag => {
+      foo => [ 'foo1', 'foo2' ],
+      bar => [ 'bar1' ],
+    }
+  };
 
 A user of the package defined in the L</SYNOPSIS> could import:
 
@@ -294,6 +314,12 @@ Similar to C<< tag >> this is a hashref where keys are tag names, but instead
 of the values being arrayrefs of function names, they are hashrefs which
 define constants.
 
+  use Exporter::Almighty -setup => {
+    const => {
+      colours => { RED => 'red', BLUE => 'blue', GREEN => 'green' },
+    },
+  };
+
 A user of the package defined in the L</SYNOPSIS> could import:
 
   use Your::Package qw( RED GREEN BLUE );   # import constants by name
@@ -307,6 +333,12 @@ should be SHOUTING_SNAKE_CASE.
 
 This is a hashref where keys are enumerated type names, and the values are
 arrayrefs of strings.
+
+  use Exporter::Almighty -setup => {
+    enum => {
+      Status => [ 'dead', 'alive' ],
+    },
+  };
 
 A user of the package defined in the L</SYNOPSIS> could import:
 
@@ -330,12 +362,73 @@ By convention, enum types should be UpperCamelCase.
 A list of other packages to also export to your caller. Each package name
 can optionally be followed by an arrayerf of import arguments.
 
+  use Exporter::Almighty -setup => {
+    also => [
+      'strict',
+      'Scalar::Util' => [ 'refaddr' ],
+      'warnings',
+    ],
+  };
+
 Your caller isn't given any options allowing them to opt in or out of this,
 so it is recommended that this be used sparingly. L<strict>, L<warnings>,
 L<feature>, L<experimental>, and L<namespace::autoclean> are good packages to
 consider listing here. Packages that export named functions are less good.
 
+=head2 API
+
+Instead of:
+
+  package Your::Package;
+  use Exporter::Almighty -setup => \%setup;
+
+It is possible to do this at run-time:
+
+  Exporter::Almighty->setup_for( 'Your::Package', \%setup );
+
+This may allow slightly more flexibility in some cases.
+
+Exporter::Almighty is also designed to be easily subclassable.
+
 =head2 Exporter::Tiny features you get for free
+
+=head3 Features for you
+
+You can export package variables, though it's rarely a good idea:
+
+  package Your::Package;
+  
+  use Exporter::Almighty -setup => {
+    tag => { default => [ 'xxx', '$YYY' ] },
+  };
+  
+  our $YYY = 42;
+
+You can use generators:
+
+  package Your::Package;
+  
+  use Exporter::Almighty -setup => {
+    tag => { default => [ 'xxx' ] },
+  };
+  
+  sub _generate_xxx {
+    my ( $me, $name, $vals, $opts ) = @_;
+    my $caller = $opts->{into};
+    
+    # Return the sub which will be installed into caller as 'xxx'.
+    return sub {
+    };
+  }
+  
+  ...;
+  
+  package main;
+  use Your::Package 'xxx' => \%vals;
+  
+  xxx( ... );
+
+=head3 Features for your caller
 
 Your caller can do lexical imports:
 
