@@ -67,6 +67,7 @@ signature_for setup_for => (
 			class  => Optional[ArrayRef],
 			role   => Optional[ArrayRef],
 			duck   => Optional[HashRef[ArrayRef]],
+			type   => Optional[ArrayRef],
 			const  => Optional[HashRef],
 		],
 	],
@@ -92,6 +93,7 @@ sub steps {
 	push @steps, 'setup_classes_for'              if $setup->{class};
 	push @steps, 'setup_roles_for'                if $setup->{role};
 	push @steps, 'setup_ducks_for'                if $setup->{duck};
+	push @steps, 'setup_types_for'                if $setup->{type};
 	push @steps, 'setup_constants_for'            if $setup->{const};
 	push @steps, 'finalize_export_variables_for';
 	return @steps;
@@ -143,11 +145,8 @@ sub setup_reexports_for {
 sub setup_enums_for {
 	my ( $me, $into, $setup ) = @_;
 	
-	my ( $into_ISA, undef, undef, $into_EXPORT_TAGS ) =
-		$me->standard_package_variables( $into );
-	my $reg = Type::Registry->for_class( $into );
 	require Type::Tiny::Enum;
-	
+	my $reg = Type::Registry->for_class( $into );
 	$me->_ensure_isa_type_library( $into );
 	
 	my %tags = %{ assert_HashRef $setup->{enum} // {} };
@@ -179,10 +178,7 @@ sub setup_roles_for {
 sub _setup_classes_or_roles_for {
 	my ( $me, $into, $setup, $kind, $tt_class ) = @_;
 	
-	my ( $into_ISA, undef, undef, $into_EXPORT_TAGS ) =
-		$me->standard_package_variables( $into );
 	my $reg = Type::Registry->for_class( $into );
-	
 	$me->_ensure_isa_type_library( $into );
 	
 	my $optlist = mkopt( $setup->{$kind} );
@@ -200,11 +196,8 @@ sub _setup_classes_or_roles_for {
 sub setup_ducks_for {
 	my ( $me, $into, $setup ) = @_;
 	
-	my ( $into_ISA, undef, undef, $into_EXPORT_TAGS ) =
-		$me->standard_package_variables( $into );
-	my $reg = Type::Registry->for_class( $into );
 	require Type::Tiny::Duck;
-	
+	my $reg = Type::Registry->for_class( $into );
 	$me->_ensure_isa_type_library( $into );
 	
 	my %types = %{ assert_HashRef $setup->{duck} // {} };
@@ -212,6 +205,36 @@ sub setup_ducks_for {
 		my $values = $types{$type_name};
 		Type::Tiny::Duck->import( { into => $into }, $type_name, $values );
 		$into->add_type( $reg->lookup( $type_name ) );
+	}
+	
+	return;
+}
+
+sub setup_types_for {
+	my ( $me, $into, $setup ) = @_;
+	
+	my $reg = Type::Registry->for_class( $into );
+	$me->_ensure_isa_type_library( $into );
+	
+	my $optlist = mkopt( $setup->{type} );
+	my @extends = ();
+	for my $dfn ( @$optlist ) {
+		my ( $lib, $list ) = @$dfn;
+		eval { require_module( $lib ) };
+		if ( is_ArrayRef $list ) {
+			for my $type_name ( @$list ) {
+				$into->add_type( $lib->get_type( $type_name ) );
+			}
+		}
+		else {
+			push @extends, $lib;
+		}
+	}
+	
+	if ( @extends ) {
+		require Type::Utils;
+		my $wrapper = eval "sub { package $into; &Type::Utils::extends; }";
+		$wrapper->( @extends );
 	}
 	
 	return;
@@ -407,6 +430,44 @@ A user of the package defined in the L</SYNOPSIS> could import:
 By convention, the tag names should be snake_case, but constant names
 should be SHOUTING_SNAKE_CASE.
 
+=head3 C<< type >>
+
+This is an arrayref of type libraries. Each library listed will be I<imported>
+into your exporter, and then the types in it will be I<re-exported> to the
+people who use your caller. Each type library can optionally be followed by an
+arrayref of type names if you don't want to just import all types.
+
+  package Your::Package;
+  
+  use Exporter::Almighty -setup => {
+    tags => {
+      foo => [ 'foo1', 'foo2' ],
+    },
+    type => [
+      'Types::Standard',
+      'Types::Common::String' => [ 'NonEmptyStr' ],
+      'Types::Common::String' => [ 'PositiveInt', 'PositiveOrZeroInt' ],
+    ],
+  };
+  
+  sub foo1 { ... }
+  sub foo2 { ... }
+  
+  ...;
+  
+  package main;
+  
+  use Your::Package qw( -foo is_NonEmptyStr );
+  
+  my $got = foo1();
+  if ( is_NonEmptyStr( $got ) ) {
+    foo2();
+  }
+
+If you re-export types like this, then your module will be "promoted" to being
+a subclass of L<Type::Library> instead of L<Exporter::Tiny>. (Type::Library is
+itself a subclass of Exporter::Tiny, so you don't miss out on any features.)
+
 =head3 C<< enum >>
 
 This is a hashref where keys are enumerated type names, and the values are
@@ -437,8 +498,7 @@ The C<< :types >>, C<< :is >>, C<< :assert >>, C<< :to >>, and C<< :constants >>
 tags will also automatically include the relevent exports.
 
 If you export any enums then your module will be "promoted" from being an
-L<Exporter::Tiny> to being a L<Type::Library> (which is itself a subclass
-of L<Exporter::Tiny>.
+L<Exporter::Tiny> to being a L<Type::Library>.
 
 By convention, enum types should be UpperCamelCase.
 
@@ -494,7 +554,7 @@ arrayrefs of method names.
   };
 
 These create L<Type::Tiny::Duck> type constraints similar to how C<enum>
-works. It will similarly promote your exporter to a L<Type::Library>.
+works. It will similarly promote your exporter to be a L<Type::Library>.
 
 =head3 C<< also >>
 

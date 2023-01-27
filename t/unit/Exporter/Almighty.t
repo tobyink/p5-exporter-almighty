@@ -198,6 +198,33 @@ describe "method `steps`" => sub {
 		];
 	};
 	
+	case 'when setup_roles_for needs to be called' => sub {
+		$setup     = { role => [] };
+		$expected  = [
+			'setup_exporter_for',
+			'setup_roles_for',
+			'finalize_export_variables_for',
+		];
+	};
+	
+	case 'when setup_ducks_for needs to be called' => sub {
+		$setup     = { duck => [] };
+		$expected  = [
+			'setup_exporter_for',
+			'setup_ducks_for',
+			'finalize_export_variables_for',
+		];
+	};
+	
+	case 'when setup_types_for needs to be called' => sub {
+		$setup     = { type => [] };
+		$expected  = [
+			'setup_exporter_for',
+			'setup_types_for',
+			'finalize_export_variables_for',
+		];
+	};
+	
 	case 'when setup_constants_for needs to be called' => sub {
 		$setup     = { const => {} };
 		$expected  = [
@@ -207,7 +234,7 @@ describe "method `steps`" => sub {
 		];
 	};
 	
-	case 'when all optional calls are needed' => sub {
+	case 'when multiple optional calls are needed' => sub {
 		$setup     = { also => [], const => {}, enum => {} };
 		$expected  = [
 			'setup_exporter_for',
@@ -501,6 +528,61 @@ describe "method `setup_ducks_for`" => sub {
 			},
 			'%EXPORT_TAGS',
 		) or diag Dumper( \%Local::TestPkg21::EXPORT_TAGS );
+	};
+};
+
+describe "method `setup_types_for`" => sub {
+	
+	tests 'it works with an explicit list of types' => sub {
+		
+		$CLASS->setup_types_for(
+			'Local::TestPkg22',
+			{ type => [ 'Types::Common::Numeric', [ 'SingleDigit' ] ] },
+		);
+		
+		is(
+			Local::TestPkg22::SingleDigit(),
+			object { prop isa => 'Type::Tiny' },
+			'SingleDigit()',
+		);
+		
+		is(
+			\%Local::TestPkg22::EXPORT_TAGS,
+			hash {
+				field types => bag {
+					item string 'SingleDigit';
+					end;
+				};
+				field assert => bag {
+					item string 'assert_SingleDigit';
+					end;
+				};
+				field is => bag {
+					item string 'is_SingleDigit';
+					end;
+				};
+				field to => bag {
+					item string 'to_SingleDigit';
+					end;
+				};
+				end;
+			},
+			'%EXPORT_TAGS',
+		) or diag Dumper( \%Local::TestPkg22::EXPORT_TAGS );
+	};
+	
+	tests 'it works with just a list of libraries' => sub {
+		
+		$CLASS->setup_types_for(
+			'Local::TestPkg23',
+			{ type => [ 'Types::Common::Numeric' ] },
+		);
+		
+		is(
+			Local::TestPkg23::SingleDigit(),
+			object { prop isa => 'Type::Tiny' },
+			'SingleDigit()',
+		);
 	};
 };
 
