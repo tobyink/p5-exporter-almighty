@@ -189,6 +189,15 @@ describe "method `steps`" => sub {
 		];
 	};
 	
+	case 'when setup_classes_for needs to be called' => sub {
+		$setup     = { class => [] };
+		$expected  = [
+			'setup_exporter_for',
+			'setup_classes_for',
+			'finalize_export_variables_for',
+		];
+	};
+	
 	case 'when setup_constants_for needs to be called' => sub {
 		$setup     = { const => {} };
 		$expected  = [
@@ -356,6 +365,145 @@ describe "method `setup_enums_for`" => sub {
 	};
 };
 
+describe "method `setup_classes_for`" => sub {
+	
+	tests 'it works' => sub {
+		
+		$CLASS->setup_classes_for(
+			'Local::TestPkg19',
+			{ class => [ 'JSON::PP' => { name => 'JsonEncoder' } ] },
+		);
+		
+		is(
+			Local::TestPkg19::JsonEncoder(),
+			object {
+				prop isa => 'Type::Tiny';
+				prop isa => 'Type::Tiny::Class';
+				call class => 'JSON::PP';
+			},
+			'JsonEncoder()',
+		);
+		
+		is(
+			\%Local::TestPkg19::EXPORT_TAGS,
+			hash {
+				field types => bag {
+					item string 'JsonEncoder';
+					end;
+				};
+				field assert => bag {
+					item string 'assert_JsonEncoder';
+					end;
+				};
+				field is => bag {
+					item string 'is_JsonEncoder';
+					end;
+				};
+				field to => bag {
+					item string 'to_JsonEncoder';
+					end;
+				};
+				end;
+			},
+			'%EXPORT_TAGS',
+		) or diag Dumper( \%Local::TestPkg19::EXPORT_TAGS );
+	};
+};
+
+describe "method `setup_roles_for`" => sub {
+	
+	tests 'it works' => sub {
+		
+		$CLASS->setup_roles_for(
+			'Local::TestPkg20',
+			{ role => [ 'Abc::Def' ] },
+		);
+		
+		is(
+			Local::TestPkg20::AbcDef(),
+			object {
+				prop isa => 'Type::Tiny';
+				prop isa => 'Type::Tiny::Role';
+				call role => 'Abc::Def';
+			},
+			'AbcDef()',
+		);
+		
+		is(
+			\%Local::TestPkg20::EXPORT_TAGS,
+			hash {
+				field types => bag {
+					item string 'AbcDef';
+					end;
+				};
+				field assert => bag {
+					item string 'assert_AbcDef';
+					end;
+				};
+				field is => bag {
+					item string 'is_AbcDef';
+					end;
+				};
+				field to => bag {
+					item string 'to_AbcDef';
+					end;
+				};
+				end;
+			},
+			'%EXPORT_TAGS',
+		) or diag Dumper( \%Local::TestPkg20::EXPORT_TAGS );
+	};
+};
+
+describe "method `setup_ducks_for`" => sub {
+	
+	tests 'it works' => sub {
+		
+		$CLASS->setup_ducks_for(
+			'Local::TestPkg21',
+			{ duck => { InputOutput => [ qw/ read write / ] } },
+		);
+		
+		is(
+			Local::TestPkg21::InputOutput(),
+			object {
+				prop isa => 'Type::Tiny';
+				prop isa => 'Type::Tiny::Duck';
+				call methods => bag {
+					item string 'read';
+					item string 'write';
+					end;
+				};
+			},
+			'InputOutput()',
+		);
+		
+		is(
+			\%Local::TestPkg21::EXPORT_TAGS,
+			hash {
+				field types => bag {
+					item string 'InputOutput';
+					end;
+				};
+				field assert => bag {
+					item string 'assert_InputOutput';
+					end;
+				};
+				field is => bag {
+					item string 'is_InputOutput';
+					end;
+				};
+				field to => bag {
+					item string 'to_InputOutput';
+					end;
+				};
+				end;
+			},
+			'%EXPORT_TAGS',
+		) or diag Dumper( \%Local::TestPkg21::EXPORT_TAGS );
+	};
+};
+
 describe "method `setup_constants_for`" => sub {
 	
 	tests 'it works' => sub {
@@ -499,6 +647,5 @@ describe "method `make_constant_subs`" => sub {
 		) or diag Dumper( \@Local::TestPkg17::EXPORT );
 	};
 };
-
 
 done_testing;

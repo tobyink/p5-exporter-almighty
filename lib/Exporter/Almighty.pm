@@ -15,15 +15,14 @@ use if $] lt '5.036000', 'builtins::compat' => @builtins;
 use if $] ge '5.036000', 'builtin' => @builtins;
 no if $] ge '5.036000', 'warnings' => qw( experimental::builtin );
 
-use B                qw( perlstring );
-use Carp             qw( croak );
-use Eval::TypeTiny   qw( eval_closure set_subname );
-use Exporter::Tiny   qw( mkopt );
+use B                 qw( perlstring );
+use Carp              qw( croak );
+use Eval::TypeTiny    qw( eval_closure set_subname );
+use Exporter::Tiny    qw( mkopt );
 use Import::Into;
-use Module::Runtime  qw( require_module module_notional_filename );
-use Type::Registry   qw();
-use Type::Tiny::Enum qw();
-use Types::Common    qw(
+use Module::Runtime   qw( require_module module_notional_filename );
+use Type::Registry    qw();
+use Types::Common     qw(
 	-sigs
 	-types
 	assert_Ref       is_Ref
@@ -63,9 +62,12 @@ signature_for setup_for => (
 		NonEmptySimpleStr,
 		Dict[
 			tag    => Optional[HashRef],
-			const  => Optional[HashRef],
-			enum   => Optional[HashRef[ArrayRef]],
 			also   => Optional[ArrayRef],
+			enum   => Optional[HashRef[ArrayRef]],
+			class  => Optional[ArrayRef],
+			role   => Optional[ArrayRef],
+			duck   => Optional[HashRef[ArrayRef]],
+			const  => Optional[HashRef],
 		],
 	],
 );
@@ -87,6 +89,9 @@ sub steps {
 	push @steps, 'setup_exporter_for';
 	push @steps, 'setup_reexports_for'            if $setup->{also};
 	push @steps, 'setup_enums_for'                if $setup->{enum};
+	push @steps, 'setup_classes_for'              if $setup->{class};
+	push @steps, 'setup_roles_for'                if $setup->{role};
+	push @steps, 'setup_ducks_for'                if $setup->{duck};
 	push @steps, 'setup_constants_for'            if $setup->{const};
 	push @steps, 'finalize_export_variables_for';
 	return @steps;
@@ -141,6 +146,7 @@ sub setup_enums_for {
 	my ( $into_ISA, undef, undef, $into_EXPORT_TAGS ) =
 		$me->standard_package_variables( $into );
 	my $reg = Type::Registry->for_class( $into );
+	require Type::Tiny::Enum;
 	
 	$me->_ensure_isa_type_library( $into );
 	
@@ -152,6 +158,59 @@ sub setup_enums_for {
 		$tag_name = lc $tag_name;
 		
 		Type::Tiny::Enum->import( { into => $into }, $type_name, $values );
+		$into->add_type( $reg->lookup( $type_name ) );
+	}
+	
+	return;
+}
+
+sub setup_classes_for {
+	my ( $me, $into, $setup ) = @_;
+	require Type::Tiny::Class;
+	$me->_setup_classes_or_roles_for( $into, $setup, 'class', 'Type::Tiny::Class' );
+}
+
+sub setup_roles_for {
+	my ( $me, $into, $setup ) = @_;
+	require Type::Tiny::Role;
+	$me->_setup_classes_or_roles_for( $into, $setup, 'role', 'Type::Tiny::Role' );
+}
+
+sub _setup_classes_or_roles_for {
+	my ( $me, $into, $setup, $kind, $tt_class ) = @_;
+	
+	my ( $into_ISA, undef, undef, $into_EXPORT_TAGS ) =
+		$me->standard_package_variables( $into );
+	my $reg = Type::Registry->for_class( $into );
+	
+	$me->_ensure_isa_type_library( $into );
+	
+	my $optlist = mkopt( $setup->{$kind} );
+	for my $dfn ( @$optlist ) {
+		( my $pkg_name  = ( $dfn->[1] //= {} )->{$kind} // $dfn->[0] );
+		( my $type_name = ( $dfn->[1] //= {} )->{name}  // $dfn->[0] ) =~ s/:://g;
+		$tt_class->import( { into => $into }, @$dfn );
+		$into->add_type( $reg->lookup( $type_name ) );
+		eval { require_module( $pkg_name ) };
+	}
+	
+	return;
+}
+
+sub setup_ducks_for {
+	my ( $me, $into, $setup ) = @_;
+	
+	my ( $into_ISA, undef, undef, $into_EXPORT_TAGS ) =
+		$me->standard_package_variables( $into );
+	my $reg = Type::Registry->for_class( $into );
+	require Type::Tiny::Duck;
+	
+	$me->_ensure_isa_type_library( $into );
+	
+	my %types = %{ assert_HashRef $setup->{duck} // {} };
+	for my $type_name ( keys %types ) {
+		my $values = $types{$type_name};
+		Type::Tiny::Duck->import( { into => $into }, $type_name, $values );
 		$into->add_type( $reg->lookup( $type_name ) );
 	}
 	
@@ -371,7 +430,10 @@ A user of the package defined in the L</SYNOPSIS> could import:
   );
   use Your::Package qw( +Status );  # shortcut for the above
 
-The C<< :type >>, C<< :is >>, C<< :assert >>, C<< :to >>, and C<< :constants >>
+The C<Status> function exported by the above will return a L<Type::Tiny::Enum>
+object.
+
+The C<< :types >>, C<< :is >>, C<< :assert >>, C<< :to >>, and C<< :constants >>
 tags will also automatically include the relevent exports.
 
 If you export any enums then your module will be "promoted" from being an
@@ -379,6 +441,60 @@ L<Exporter::Tiny> to being a L<Type::Library> (which is itself a subclass
 of L<Exporter::Tiny>.
 
 By convention, enum types should be UpperCamelCase.
+
+=head3 C<< class >>
+
+This is an arrayref of class names.
+
+  use Exporter::Almighty -setup => {
+    class => [
+      'HTTP::Tiny',
+      'LWP::UserAgent',
+    ],
+  };
+
+People can import:
+
+  use Your::Package qw( +HTTPTiny +LWPUserAgent );
+  
+  unless ( is_HTTPTiny($x) or is_LWPUserAgent($x) ) {
+    $x = HTTPTiny->new();
+  }
+
+These create L<Type::Tiny::Class> type constraints similar to how C<enum>
+works. It will similarly promote your exporter to a L<Type::Library>.
+
+Notice that the C<new> method will be proxied through to the underlying
+class, so these can also work as useful aliases for long class names.
+
+  use Exporter::Almighty -setup => {
+    class => [
+      'ShortName' => { class => 'Very::Long::Class::Name' },
+      'TinyName'  => { class => 'An::Even::Longer::Class::Name' },
+    ],
+  };
+
+Exporter::Almighty will attempt to pre-emptively load modules mentioned here,
+so you don't need to do it yourself. However if the modules don't exist, it
+won't complain.
+
+=head3 C<< role >>
+
+This works the same as C<class>, except for roles.
+
+=head3 C<< duck >>
+
+This is a hashref where keys are "duck type" type names, and the values are
+arrayrefs of method names.
+
+  use Exporter::Almighty -setup => {
+    duck => [
+      'UserAgent' => [ 'head', 'get', 'post' ],
+    ],
+  };
+
+These create L<Type::Tiny::Duck> type constraints similar to how C<enum>
+works. It will similarly promote your exporter to a L<Type::Library>.
 
 =head3 C<< also >>
 
