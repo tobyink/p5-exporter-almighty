@@ -27,6 +27,8 @@ use if $] lt '5.036000',
 	'builtins::compat' => qw( is_bool created_as_string created_as_number );
 use if $] ge '5.036000',
 	'builtin'          => qw( is_bool created_as_string created_as_number );
+no if $] ge '5.036000',
+	'warnings'         => qw( experimental::builtin );
 
 use FindBin qw( $Bin );
 use lib "$Bin/../../lib";
