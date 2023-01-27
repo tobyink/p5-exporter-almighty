@@ -1,5 +1,12 @@
 # This file acts as the project's changelog.
 
+`Exporter-Almighty 0.001002 cpan:TOBYINK`
+	issued  2023-01-27;
+	changeset [
+		item "Class, role, and duck types can now be defined as easily as enum types."^^Change;
+		item "Your exporter can re-export types from type libraries."^^Change;
+	].
+
 `Exporter-Almighty 0.001001 cpan:TOBYINK`
 	issued  2023-01-27;
 	changeset [
