@@ -7,7 +7,7 @@ package Exporter::Almighty;
 our $AUTHORITY = 'cpan:TOBYINK';
 our $VERSION   = '0.001003';
 
-use parent           qw( Exporter::Tiny );
+use parent qw( Exporter::Tiny );
 
 my @builtins;
 BEGIN { @builtins = qw( is_bool created_as_string created_as_number ) };
@@ -341,6 +341,7 @@ Exporter::Almighty - combining Exporter::Tiny with some other stuff for added po
 
   package Your::Package;
   
+  use v5.12;
   use Exporter::Almighty -setup => {
     tag => {
       foo => [ 'foo1', 'foo2' ],
@@ -373,6 +374,11 @@ C<< %EXPORT_TAGS >>, etc.
 
 Exporter::Almighty supports lexical exports, even on Perl versions as old
 as 5.12.
+
+Exporter::Almighty indeed requires Perl 5.12, so it's strongly recommended
+you add C<< use v5.12 >> (or higher) before C<< use Exporter::Almighty >>
+so that your package can benefit from features which don't exist in legacy
+versions of Perl.
 
 =head2 Setup Options
 
