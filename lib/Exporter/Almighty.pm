@@ -5,7 +5,7 @@ use warnings;
 package Exporter::Almighty;
 
 our $AUTHORITY = 'cpan:TOBYINK';
-our $VERSION   = '0.001002';
+our $VERSION   = '0.001003';
 
 use parent           qw( Exporter::Tiny );
 
@@ -372,6 +372,9 @@ Exporter::Almighty - combining Exporter::Tiny with some other stuff for added po
 This module aims to make building exporters easier. It is based on
 L<Exporter::Tiny>, but helps you avoid manually setting C<< @EXPORT_OK >>,
 C<< %EXPORT_TAGS >>, etc.
+
+Exporter::Almighty supports lexical exports, even on Perl versions as old
+as 5.12.
 
 =head2 Setup Options
 
