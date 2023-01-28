@@ -434,7 +434,7 @@ should be SHOUTING_SNAKE_CASE.
 
 This is an arrayref of type libraries. Each library listed will be I<imported>
 into your exporter, and then the types in it will be I<re-exported> to the
-people who use your caller. Each type library can optionally be followed by an
+people who use your package. Each type library can optionally be followed by an
 arrayref of type names if you don't want to just import all types.
 
   package Your::Package;
@@ -445,8 +445,8 @@ arrayref of type names if you don't want to just import all types.
     },
     type => [
       'Types::Standard',
-      'Types::Common::String' => [ 'NonEmptyStr' ],
-      'Types::Common::String' => [ 'PositiveInt', 'PositiveOrZeroInt' ],
+      'Types::Common::String'  => [ 'NonEmptyStr' ],
+      'Types::Common::Numeric' => [ 'PositiveInt', 'PositiveOrZeroInt' ],
     ],
   };
   
