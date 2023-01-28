@@ -57,19 +57,17 @@ sub standard_package_variables {
 }
 
 signature_for setup_for => (
-	method     => 1,
-	positional => [
-		NonEmptySimpleStr,
-		Dict[
-			tag    => Optional[HashRef],
-			also   => Optional[ArrayRef],
-			enum   => Optional[HashRef[ArrayRef]],
-			class  => Optional[ArrayRef],
-			role   => Optional[ArrayRef],
-			duck   => Optional[HashRef[ArrayRef]],
-			type   => Optional[ArrayRef],
-			const  => Optional[HashRef],
-		],
+	method  => 1,
+	head    => [ NonEmptySimpleStr ],
+	named   => [
+		tag    => Optional[HashRef],
+		also   => Optional[ArrayRef],
+		enum   => Optional[HashRef[ArrayRef]],
+		class  => Optional[ArrayRef],
+		role   => Optional[ArrayRef],
+		duck   => Optional[HashRef[ArrayRef]],
+		type   => Optional[ArrayRef],
+		const  => Optional[HashRef],
 	],
 );
 
@@ -562,7 +560,7 @@ works. It will similarly promote your exporter to be a L<Type::Library>.
 =head3 C<< also >>
 
 A list of other packages to also export to your caller. Each package name
-can optionally be followed by an arrayerf of import arguments.
+can optionally be followed by an arrayref of import arguments.
 
   use Exporter::Almighty -setup => {
     also => [
@@ -586,7 +584,7 @@ Instead of:
 
 It is possible to do this at run-time:
 
-  Exporter::Almighty->setup_for( 'Your::Package', \%setup );
+  Exporter::Almighty->setup_for( 'Your::Package', %setup );
 
 This may allow slightly more flexibility in some cases.
 
@@ -595,6 +593,8 @@ Exporter::Almighty is also designed to be easily subclassable.
 =head2 Exporter::Tiny features you get for free
 
 =head3 Features for you
+
+Exporter::Almighty will import L<strict> and L<warnings> into your package.
 
 You can export package variables, though it's rarely a good idea:
 

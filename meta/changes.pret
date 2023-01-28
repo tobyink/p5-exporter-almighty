@@ -5,6 +5,7 @@
 	changeset [
 		item "Correct minor errors in the pod for the `type` option."^^Documentation;
 		item "Improved description."^^Documentation;
+		item "Allow `setup_for` to take a hash instead of a hashref."^^Change;
 	].
 
 `Exporter-Almighty 0.001002 cpan:TOBYINK`
