@@ -602,6 +602,14 @@ describe "method `setup_constants_for`" => sub {
 		is( Local::TestPkg15::RED(), 'r', 'RED()' );
 		is( Local::TestPkg15::GREEN(), 'g', 'GREEN()' );
 		is( Local::TestPkg15::BLUE(), 'b', 'BLUE()' );
+		is( $Local::TestPkg15::RED, 'r', 'RED()' );
+		is( $Local::TestPkg15::GREEN, 'g', 'GREEN()' );
+		is( $Local::TestPkg15::BLUE, 'b', 'BLUE()' );
+		
+		my $e = dies {
+			$Local::TestPkg15::BLUE = 42;
+		};
+		isnt( $e, undef, 'exception writing to read-only variable' );
 		
 		ok(
 			created_as_string( Local::TestPkg15::STRINGY() ),
@@ -632,6 +640,9 @@ describe "method `setup_constants_for`" => sub {
 					item string 'RED';
 					item string 'GREEN';
 					item string 'BLUE';
+					item string '$RED';
+					item string '$GREEN';
+					item string '$BLUE';
 					end;
 				};
 				field things => bag {
@@ -639,6 +650,10 @@ describe "method `setup_constants_for`" => sub {
 					item string 'NUMMY';
 					item string 'BOOLY';
 					item string 'REFFY';
+					item string '$STRINGY';
+					item string '$NUMMY';
+					item string '$BOOLY';
+					item string '$REFFY';
 					end;
 				};
 				field constants => bag {
@@ -649,6 +664,16 @@ describe "method `setup_constants_for`" => sub {
 					item string 'NUMMY';
 					item string 'BOOLY';
 					item string 'REFFY';
+					end;
+				};
+				field ro_vars => bag {
+					item string '$RED';
+					item string '$GREEN';
+					item string '$BLUE';
+					item string '$STRINGY';
+					item string '$NUMMY';
+					item string '$BOOLY';
+					item string '$REFFY';
 					end;
 				};
 				end;
@@ -693,7 +718,7 @@ describe "method `make_constant_subs`" => sub {
 };
 
 
-describe "method `make_constant_subs`" => sub {
+describe "method `finalize_export_variables_for`" => sub {
 	
 	tests 'it works' => sub {
 		

@@ -267,8 +267,11 @@ sub setup_constants_for {
 	for my $tag_name ( keys %tags ) {
 		my %exports = %{ assert_HashRef $tags{$tag_name} };
 		$tag_name =~ s/^[-:]//;
-		push @{ $into_EXPORT_TAGS->{$tag_name}   //= [] }, sort keys %exports;
-		push @{ $into_EXPORT_TAGS->{'constants'} //= [] }, sort keys %exports;
+		my @constant_names = sort keys %exports;
+		my @readonly_names = map "\$$_", @constant_names;
+		push @{ $into_EXPORT_TAGS->{$tag_name}   //= [] }, @constant_names, @readonly_names;
+		push @{ $into_EXPORT_TAGS->{'constants'} //= [] }, @constant_names;
+		push @{ $into_EXPORT_TAGS->{'ro_vars'}   //= [] }, @readonly_names;
 		$me->make_constant_subs( $into, \%exports );
 	}
 	
@@ -299,6 +302,8 @@ sub make_constant_subs {
 		
 		no strict 'refs';
 		*$full_name = set_subname $full_name => $coderef;
+		$$full_name = $value;
+		&Internals::SvREADONLY( \$$full_name, 1 );
 	}
 }
 
@@ -436,6 +441,16 @@ A user of the package defined in the L</SYNOPSIS> could import:
 
 By convention, the tag names should be snake_case, but constant names
 should be SHOUTING_SNAKE_CASE.
+
+For every constant like C<< RED >>, a readonly variable C<< $RED >> is
+also created, making it easier to interpolate the constant into a string.
+
+  use Your::Package qw( $RED $GREEN $BLUE );  # import ro vars by name
+  use Your::Package qw( :colours );           # import 'colours' ro vars
+  use Your::Package qw( :ro_vars );           # import ALL ro vars
+
+Note that the C<< :colours >> tag imports both the traditional and readonly
+variable versions of a constant.
 
 =head3 C<< type >>
 
