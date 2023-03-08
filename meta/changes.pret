@@ -1,5 +1,11 @@
 # This file acts as the project's changelog.
 
+`Exporter-Almighty 0.001004 cpan:TOBYINK`
+	issued  2023-03-08;
+	changeset [
+		item "All constants exported by Exporter::Almighty-based modules now also have a corresponding exportable readonly variable."^^Addition;
+	].
+
 `Exporter-Almighty 0.001003 cpan:TOBYINK`
 	issued  2023-01-28;
 	changeset [
