@@ -7,6 +7,7 @@
 	:runtime-requirement    [ :on "Eval::TypeTiny"^^:CpanId ];
 	:runtime-requirement    [ :on "Exporter::Shiny 1.006000"^^:CpanId ];
 	:runtime-requirement    [ :on "Import::Into"^^:CpanId ];
+	:runtime-requirement    [ :on "Lexical::Var 0.010"^^:CpanId ];
 	:runtime-requirement    [ :on "Module::Runtime"^^:CpanId ];
 	:runtime-requirement    [ :on "Type::Library"^^:CpanId ];
 	:runtime-requirement    [ :on "Type::Registry"^^:CpanId ];
