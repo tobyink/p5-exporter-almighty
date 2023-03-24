@@ -4,6 +4,7 @@
 	issued  2023-03-24;
 	changeset [
 		item "No longer need to decide between Lexical::Var and Alt::Lexical::Var::ButSupportsModernPerl as part of Makefile.PL."^^Packaging;
+		item "More useful test output from t/00start.t."^^Tests;
 	].
 
 `Exporter-Almighty 0.001004 cpan:TOBYINK`
