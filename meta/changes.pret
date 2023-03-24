@@ -1,5 +1,11 @@
 # This file acts as the project's changelog.
 
+`Exporter-Almighty 0.001005 cpan:TOBYINK`
+	issued  2023-03-24;
+	changeset [
+		item "Depend on Lexical::Var statically, as we no longer need to switch between it and Alt::Lexical::Var::ButSupportsModernPerl."^^Packaging;
+	].
+
 `Exporter-Almighty 0.001004 cpan:TOBYINK`
 	issued  2023-03-08;
 	changeset [
