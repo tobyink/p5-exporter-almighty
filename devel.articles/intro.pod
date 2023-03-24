@@ -1,0 +1,116 @@
+=head1 Introducing Exporter::Almighty
+
+Consider a simple module like this:
+
+  package MyApp::Util::Maths;
+  
+  use strict;
+  use warnings;
+  
+  use constant PI    => 3.14159265358979;
+  use constant EULER => 2.71828182845905;
+  
+  use base 'Exporter';
+  
+  our @EXPORT_OK = qw( PI EULER add );
+  our %EXPORT_TAGS = (
+    arithmetic => [ qw( add ) ],
+    numbers    => [ qw( PI EULER ) ],
+    all        => \@EXPORT_OK,
+  );
+  
+  sub add {
+    my ( $x, $y ) = @_;
+    return $x + $y;
+  }
+  
+  1;
+
+You might use it like:
+
+  use MyApp::Util::Maths qw( PI add );
+  
+  my $pi_plus_one = add( PI, 1 );
+
+L<Exporter::Almighty> is a module designed to reduce boilerplate in your
+utils-like modules, and increase their functionality.
+
+The initial module can be rewritten as:
+
+  package MyApp::Util::Maths;
+  
+  use Exporter::Almighty -setup => {
+    const => {
+      numbers => {
+        PI    => 3.14159265358979,
+        EULER => 2.71828182845905,
+      },
+    },
+    tag => {
+      arithmetic => [ 'add' ],
+    },
+  };
+  
+  sub add {
+    my ( $x, $y ) = @_;
+    return $x + $y;
+  }
+  
+  1;
+
+Exporter::Almighty sets up your exporting automatically (but using
+L<Exporter::Tiny> instead of L<Exporter>), and calls C<< use strict >>
+and C<< use warnings >> on your behalf.
+
+Exporter::Almighty creates your constants for you, so you don't need
+to duplicate your list of constants anywhere.
+
+A bonus for your caller is that they can do:
+
+  use MyApp::Util::Maths qw( $PI $EULER );
+
+To import read-only C<< $PI >> and C<< $EULER >> variables.
+
+They can also do:
+
+  my $pi_plus_one = do {
+    use MyApp::Util::Maths -lexical, qw( add $PI );
+    add( $PI, 1 );
+  };
+  
+  # add() and $PI are not defined outside the above block
+
+Exporter::Almighty has integrations with Type::Tiny making it easy to
+define and export Type::Tiny type constraints as part of your module.
+For example:
+
+  package MyApp::Util::Maths;
+  
+  use Exporter::Almighty -setup => {
+    const => { ... },
+    tag   => { ... },
+    type  => { 'Types::Standard' => [ 'Int', 'Num' ] },
+    class => [ 'Calc' => { class => 'MyApp::Calculator' } ],
+  };
+  
+  ...;
+  
+  1;
+
+Now people can import the B<Int> and B<Num> type constraints from
+your module:
+
+  use MyApp::Util::Maths qw( Int );
+
+They can even import a C<< is_Int >> function:
+
+  use MyApp::Util::Maths qw( is_Int );
+
+You've also defined a B<Calc> type constraint which can be used like this:
+
+  has calculator => (
+    is        => 'ro',
+    isa       => Calc,
+    default   => sub { Calc->new },
+  );
+
