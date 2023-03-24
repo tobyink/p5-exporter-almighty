@@ -3,7 +3,7 @@
 `Exporter-Almighty 0.001005 cpan:TOBYINK`
 	issued  2023-03-24;
 	changeset [
-		item "Depend on Lexical::Var statically, as we no longer need to switch between it and Alt::Lexical::Var::ButSupportsModernPerl."^^Packaging;
+		item "No longer need to decide between Lexical::Var and Alt::Lexical::Var::ButSupportsModernPerl as part of Makefile.PL."^^Packaging;
 	].
 
 `Exporter-Almighty 0.001004 cpan:TOBYINK`
