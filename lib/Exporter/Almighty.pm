@@ -582,9 +582,9 @@ This is a hashref where keys are "duck type" type names, and the values are
 arrayrefs of method names.
 
   use Exporter::Almighty -setup => {
-    duck => [
+    duck => {
       'UserAgent' => [ 'head', 'get', 'post' ],
-    ],
+    },
   };
 
 These create L<Type::Tiny::Duck> type constraints similar to how C<enum>
